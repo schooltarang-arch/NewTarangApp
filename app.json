@@ -27,6 +27,7 @@
       "bundleIdentifier": "com.auth0.tarang"
     },
     "android": {
+      "package": "com.schooltarang.tarang",
       "googleServicesFile": "./google-services.json",
       "permissions": [
         "INTERNET",
@@ -45,7 +46,7 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      "./config/withSwishDeepLinking.ts",
+      
       [
         "react-native-auth0",
         {

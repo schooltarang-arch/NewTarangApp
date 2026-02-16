@@ -1,10 +1,10 @@
 import { Tabs } from 'expo-router';
 
 export default function TabLayout() {
-  return (
+ return (
     <Tabs>
-      <Tabs.Screen name="dashboard" options={{ title: 'Dashboard' }} />
-      <Tabs.Screen name="payment" options={{ title: 'Payments' }} />
+      <Tabs.Screen name="dashboard" />
+      <Tabs.Screen name="payment" />
     </Tabs>
   );
 }
