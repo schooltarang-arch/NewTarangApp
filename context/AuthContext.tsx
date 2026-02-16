@@ -34,67 +34,39 @@ const [request, response, promptAsync] = Google.useAuthRequest({
 
 
   useEffect(() => {
-  console.log("GOOGLE RESPONSE:", response);
+  const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
+    console.log("AUTH STATE:", firebaseUser);
 
-  if (response?.type === 'success') {
-    console.log("Google success");
-
-    const idToken = response.authentication?.idToken;
-    console.log("ID TOKEN:", idToken);
-
-    if (!idToken) {
-      console.log("No idToken found");
+    if (!firebaseUser) {
+      setUser(null);
+      setRole(null);
+      setLoading(false);
       return;
     }
 
-    const credential = GoogleAuthProvider.credential(idToken);
-
-    signInWithCredential(auth, credential)
-      .then(() => console.log("Firebase login success"))
-      .catch((err) => console.log("Firebase login error:", err));
-  }
-}, [response]);
-
-
-
-  useEffect(() => {
-    const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-        console.log("AUTH STATE:", firebaseUser);
-      if (!firebaseUser) {
-        setUser(null);
-        setRole(null);
-        setLoading(false);
-        return;
-      }
-
+    try {
       setUser(firebaseUser);
 
-      const adminDoc = await getDoc(doc(db, 'admins', firebaseUser.uid));
-      if (adminDoc.exists()) {
-        setRole('admin');
-        setLoading(false);
-        return;
-      }
+      const docSnap = await getDoc(doc(db, "users", firebaseUser.uid));
 
-      const parentDoc = await getDoc(doc(db, 'parents', firebaseUser.uid));
-      if (parentDoc.exists()) {
-        setRole('parent');
-        setLoading(false);
-        return;
-      }
+  if (docSnap.exists()) {
+    setRole(docSnap.data().role);
+  } else {
+    setRole("pending");
+  }
+      // Example role fetch (if you have one)
+      // const roleDoc = await getDoc(...)
+      // setRole(roleDoc.data()?.role ?? "parent");
 
-      await setDoc(doc(db, 'pending_parents', firebaseUser.uid), {
-        name: firebaseUser.displayName,
-        email: firebaseUser.email,
-        requestedAt: new Date().toISOString(),
-      });
+      setLoading(false); // 🔥 THIS IS CRITICAL
+    } catch (error) {
+      console.log("Auth error:", error);
+      setLoading(false); // 🔥 MUST ALSO BE HERE
+    }
+  });
 
-      setRole('pending');
-      setLoading(false);
-    });
-
-    return unsubscribe;
-  }, []);
+  return unsubscribe;
+}, []);
 
   const login = async () => {
     console.log("PROMPTING GOOGLE LOGIN");

@@ -1,5 +1,10 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useAuth } from '../context/AuthContext';
+import * as AuthSession from "expo-auth-session";
+
+const redirectUri = AuthSession.makeRedirectUri({
+  scheme: "tarang",
+});
 
 export default function LoginScreen() {
   const { login } = useAuth();

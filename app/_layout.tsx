@@ -1,6 +1,6 @@
-import { Stack } from 'expo-router';
-import { AuthProvider } from '../context/AuthContext';
-import { PaymentProvider } from '../context/PaymentContext';
+import { Stack } from "expo-router";
+import { PaymentProvider } from "../context/PaymentContext";
+import { AuthProvider } from "../context/AuthContext";
 
 export default function RootLayout() {
   return (
