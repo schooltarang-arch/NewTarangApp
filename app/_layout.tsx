@@ -1,13 +1,15 @@
-import { Stack } from "expo-router";
-import { PaymentProvider } from "../context/PaymentContext";
-import { AuthProvider } from "../context/AuthContext";
+import { Stack } from 'expo-router';
+import { AuthProvider } from '../context/AuthContext';
+import { ActivityIndicator, View } from 'react-native';
 
 export default function RootLayout() {
   return (
     <AuthProvider>
-      <PaymentProvider>
-        <Stack screenOptions={{ headerShown: false }} />
-      </PaymentProvider>
+      <Stack
+        screenOptions={{
+          headerShown: false,
+        }}
+      />
     </AuthProvider>
   );
 }

@@ -1,13 +1,11 @@
 import { Redirect } from 'expo-router';
-import { View, ActivityIndicator } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import { useEffect } from "react";
-import { useRouter } from "expo-router";
+import { ActivityIndicator, View } from 'react-native';
 
 export default function Index() {
-  const router = useRouter();
-  const { user, role, loading } = useAuth();
+  const { user, loading } = useAuth();
 
+  // ⏳ Still resolving auth
   if (loading) {
     return (
       <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -16,14 +14,11 @@ export default function Index() {
     );
   }
 
+  // 🚫 Not logged in
   if (!user) {
     return <Redirect href="/login" />;
   }
 
-  if (role === 'pending') {
-    return <Redirect href="/pending" />;
-  }
-
+  // ✅ Logged in
   return <Redirect href="/(tabs)/dashboard" />;
 }
-
