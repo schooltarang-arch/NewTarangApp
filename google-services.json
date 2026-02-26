@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:165713778974:android:201b72edb0ccff41b3110f",
+        "mobilesdk_app_id": "1:165713778974:android:5c551b8190291018b3110f",
         "android_client_info": {
-          "package_name": "com.auth0.tarang"
+          "package_name": "com.schooltarang.tarang"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "165713778974-8m3s4ml2gau42jd76hvaj0agrahisja4.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyD3P0L5ij5rf8DMXRtlYUdaW8LUdFQySj8"
@@ -20,7 +25,12 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "165713778974-0uu7pmi9e64v5tnua05kethck10lggme.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
         }
       }
     }

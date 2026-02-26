@@ -1,6 +1,6 @@
 import { Text, StyleSheet, Pressable, View } from 'react-native';
 import { useRouter } from 'expo-router';
-import { db } from '../firebase';
+import { db } from '../firebaseConfig';
 
 
 type Payment = {
@@ -17,6 +17,7 @@ type ChildProps = {
   className: string;
   payments: Payment[];
 };
+
 
 export default function ChildCard({ id, name, className, payments }: ChildProps) {
   const router = useRouter();

@@ -1,14 +1,17 @@
 import { View, Text, Pressable, StyleSheet } from 'react-native';
 import { useAuth } from '../context/AuthContext';
-import * as AuthSession from "expo-auth-session";
-
-const redirectUri = AuthSession.makeRedirectUri({
-  scheme: "tarang",
-});
+import { useEffect } from 'react';
+import { router } from 'expo-router';
 
 export default function LoginScreen() {
-  const { login } = useAuth();
+  const { login, user, loading } = useAuth();
 
+  useEffect(() => {
+    if (!loading && user) {
+      router.replace('/(tabs)/dashboard');
+    }
+  }, [user, loading]);
+  
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Tarang Academy</Text>

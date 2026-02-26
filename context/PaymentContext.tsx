@@ -3,27 +3,12 @@ import {
   collection,
   getDocs,
   addDoc,
-  updateDoc,
-  doc,
   query,
   where,
+  serverTimestamp,
 } from 'firebase/firestore';
-import { db } from '../firebase';
-
-export type PaymentStatus = 'PAID' | 'DUE' | 'OVERDUE';
-
-export type Payment = {
-  month: string; // "YYYY-MM"
-  amount: number;
-  dueDate: string;
-  status: PaymentStatus;
-  paidDate?: string;
-};
-
-export type AttendanceRecord = {
-  date: string;
-  present: boolean;
-};
+import { db } from '../firebaseConfig';
+import { useAuth } from './AuthContext';
 
 export type Student = {
   id: string;
@@ -31,8 +16,8 @@ export type Student = {
   firstName: string;
   lastName: string;
   className: string;
-  payments: Payment[];
-  attendance: AttendanceRecord[];
+  parentId: string;
+  active: boolean;
 };
 
 type PaymentContextType = {
@@ -41,22 +26,32 @@ type PaymentContextType = {
     personalId: string,
     firstName: string,
     lastName: string,
-    className: string,
-    amount: number
+    className: string
   ) => Promise<void>;
-  markAsPaid: (id: string) => Promise<void>;
-  markAttendance: (id: string, present: boolean) => Promise<void>;
 };
 
 const PaymentContext = createContext<PaymentContextType | undefined>(undefined);
 
 export const PaymentProvider = ({ children }: { children: React.ReactNode }) => {
+  const { user } = useAuth();
   const [students, setStudents] = useState<Student[]>([]);
 
-  // 🔹 LOAD STUDENTS FROM FIRESTORE
+  /* ================= LOAD STUDENTS ================= */
+
   useEffect(() => {
+    if (!user) {
+      setStudents([]);
+      return;
+    }
+
     const fetchStudents = async () => {
-      const snapshot = await getDocs(collection(db, 'students'));
+      const q = query(
+        collection(db, 'students'),
+        where('parentId', '==', user.uid),
+        where('active', '==', true)
+      );
+
+      const snapshot = await getDocs(q);
 
       const data = snapshot.docs.map(docSnap => ({
         id: docSnap.id,
@@ -67,20 +62,23 @@ export const PaymentProvider = ({ children }: { children: React.ReactNode }) => 
     };
 
     fetchStudents();
-  }, []);
+  }, [user]);
 
-  // 🔹 ADD STUDENT
+  /* ================= ADD STUDENT ================= */
+
   const addStudent = async (
     personalId: string,
     firstName: string,
     lastName: string,
-    className: string,
-    amount: number
+    className: string
   ) => {
-    // Prevent duplicate personalId
+    if (!user) throw new Error('Not authenticated');
+
+    // Prevent duplicate personalId for this parent
     const q = query(
       collection(db, 'students'),
-      where('personalId', '==', personalId)
+      where('personalId', '==', personalId),
+      where('parentId', '==', user.uid)
     );
 
     const existing = await getDocs(q);
@@ -89,103 +87,28 @@ export const PaymentProvider = ({ children }: { children: React.ReactNode }) => 
       throw new Error('Student with this personal number already exists');
     }
 
-    const today = new Date();
-    const monthKey = today.toISOString().slice(0, 7);
-    const dueDate = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      5
-    )
-      .toISOString()
-      .split('T')[0];
-
     const newStudent = {
       personalId,
       firstName,
       lastName,
       className,
-      payments: [
-        {
-          month: monthKey,
-          amount,
-          dueDate,
-          status: 'DUE' as PaymentStatus,
-        },
-      ],
-      attendance: [],
+      parentId: user.uid,
+      active: true,
+      createdAt: serverTimestamp(),
     };
 
     const docRef = await addDoc(collection(db, 'students'), newStudent);
 
     setStudents(prev => [
       ...prev,
-      { id: docRef.id, ...newStudent },
+      { id: docRef.id, ...newStudent } as Student,
     ]);
   };
 
-  // 🔹 MARK AS PAID
-  const markAsPaid = async (id: string) => {
-    const today = new Date().toISOString().split('T')[0];
-    const currentMonth = new Date().toISOString().slice(0, 7);
-
-    const student = students.find(s => s.id === id);
-    if (!student) return;
-
-    const updatedPayments = student.payments.map(payment =>
-      payment.month === currentMonth
-        ? { ...payment, status: 'PAID' as PaymentStatus, paidDate: today }
-        : payment
-    );
-
-    await updateDoc(doc(db, 'students', id), {
-      payments: updatedPayments,
-    });
-
-    setStudents(prev =>
-      prev.map(s =>
-        s.id === id ? { ...s, payments: updatedPayments } : s
-      )
-    );
-  };
-
-  // 🔹 MARK ATTENDANCE
-  const markAttendance = async (id: string, present: boolean) => {
-    const today = new Date().toISOString().split('T')[0];
-
-    const student = students.find(s => s.id === id);
-    if (!student) return;
-
-    const existingIndex = student.attendance.findIndex(
-      record => record.date === today
-    );
-
-    let updatedAttendance: AttendanceRecord[];
-
-    if (existingIndex !== -1) {
-      updatedAttendance = [...student.attendance];
-      updatedAttendance[existingIndex] = { date: today, present };
-    } else {
-      updatedAttendance = [
-        ...student.attendance,
-        { date: today, present },
-      ];
-    }
-
-    await updateDoc(doc(db, 'students', id), {
-      attendance: updatedAttendance,
-    });
-
-    setStudents(prev =>
-      prev.map(s =>
-        s.id === id ? { ...s, attendance: updatedAttendance } : s
-      )
-    );
-  };
+  /* ================= PROVIDER ================= */
 
   return (
-    <PaymentContext.Provider
-      value={{ students, addStudent, markAsPaid, markAttendance }}
-    >
+    <PaymentContext.Provider value={{ students, addStudent }}>
       {children}
     </PaymentContext.Provider>
   );

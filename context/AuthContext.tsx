@@ -4,24 +4,20 @@ import React, {
   useEffect,
   useState,
   ReactNode,
+  useMemo,
 } from 'react';
 
+import { Platform } from 'react-native';
 import * as WebBrowser from 'expo-web-browser';
 import * as Google from 'expo-auth-session/providers/google';
-
 import {
   signInWithCredential,
   GoogleAuthProvider,
   onAuthStateChanged,
   signOut,
 } from 'firebase/auth';
-
-import { doc, getDoc } from 'firebase/firestore';
-
-import { auth } from '../lib/firebase';
-import { db } from '../firebase';
-
-WebBrowser.maybeCompleteAuthSession();
+import { collection, doc, getDoc } from 'firebase/firestore';
+import { auth , db } from '../firebaseConfig';
 
 /* ================= TYPES ================= */
 
@@ -46,24 +42,41 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<Role>(null);
   const [loading, setLoading] = useState(true);
 
-  /* ---------- Google Auth Request ---------- */
+  /* ---------- Prevent SSR issues ---------- */
 
-  const [request, response, promptAsync] = Google.useAuthRequest({
-    clientId:
-      '165713778974-0uu7pmi9e64v5tnua05kethck10lggme.apps.googleusercontent.com',
-    webClientId:
-      '165713778974-8m3s4ml2gau42jd76hvaj0agrahisja4.apps.googleusercontent.com',
-  });
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+  }, []);
+
+  const googleConfig = useMemo(() => {
+    // Prevent execution during SSR
+    if (Platform.OS === 'web' && typeof window === 'undefined') {
+      return null;
+    }
+
+    return {
+      clientId:
+        '165713778974-8m3s4ml2gau42jd76hvaj0agrahisja4.apps.googleusercontent.com',
+      scopes: ['openid', 'profile', 'email'],
+      responseType: 'id_token',
+    };
+  }, []);
+
+  const [request, response, promptAsync] = Google.useAuthRequest(
+    googleConfig ?? {}
+  );
 
   /* ---------- Handle Google → Firebase ---------- */
 
   useEffect(() => {
     if (response?.type !== 'success') return;
 
-    const idToken = response.authentication?.idToken;
+    const idToken =
+      response.authentication?.idToken ??
+      response.params?.id_token;
 
     if (!idToken) {
-      console.log('Google auth succeeded but no idToken found');
+      console.log('No idToken returned from Google');
       return;
     }
 
@@ -77,10 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   /* ---------- Firebase Auth State ---------- */
 
   useEffect(() => {
-    console.log('RAW GOOGLE RESPONSE:', response);
     const unsubscribe = onAuthStateChanged(auth, async (firebaseUser) => {
-      console.log('AUTH STATE:', firebaseUser);
-
       if (!firebaseUser) {
         setUser(null);
         setRole(null);
@@ -107,13 +117,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     });
 
     return unsubscribe;
-    console.log('RAW GOOGLE RESPONSE:', response);
   }, []);
 
   /* ---------- Actions ---------- */
 
   const login = async () => {
-    console.log('PROMPTING GOOGLE LOGIN');
+    if (!request) return;
     await promptAsync();
   };
 

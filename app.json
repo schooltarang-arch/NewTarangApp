@@ -10,6 +10,7 @@
     "newArchEnabled": false,
     "ios": {
       "supportsTablet": true,
+      "bundleIdentifier": "com.schooltarang.tarang",
       "infoPlist": {
         "LSApplicationQueriesSchemes": [
           "swish"
@@ -23,8 +24,7 @@
             }
           }
         }
-      },
-      "bundleIdentifier": "com.auth0.tarang"
+      }
     },
     "android": {
       "package": "com.schooltarang.tarang",
@@ -36,9 +36,7 @@
       "adaptiveIcon": {
         "foregroundImage": "./assets/images/adaptive-icon.png",
         "backgroundColor": "#ffffff"
-      },
-      "newArchEnabled": false,
-      "package": "com.auth0.tarang"
+      }
     },
     "web": {
       "bundler": "metro",
@@ -46,13 +44,6 @@
       "favicon": "./assets/images/favicon.png"
     },
     "plugins": [
-      
-      [
-        "react-native-auth0",
-        {
-          "domain": "tarangschool.eu.auth0.com"
-        }
-      ],
       "expo-router",
       [
         "expo-splash-screen",
@@ -63,6 +54,13 @@
           "backgroundColor": "#ffffff"
         }
       ],
+       [
+         "@stripe/stripe-react-native",
+        {
+          "merchantIdentifier": "merchant.com.tarang",
+          "enableGooglePay": true
+        }
+        ],
       "expo-asset",
       [
         "expo-build-properties",
