@@ -1,4 +1,20 @@
-import { Slot } from 'expo-router';
+import { Stack } from 'expo-router';
+import { AuthProvider } from '../context/AuthContext';
+import { PaymentProvider } from '../context/PaymentContext';
+
+export default function RootLayout() {
+  return (
+    <AuthProvider>
+      <PaymentProvider>
+        <Stack screenOptions={{ headerShown: false }} />
+      </PaymentProvider>
+    </AuthProvider>
+  );
+}
+
+
+
+/* import { Slot } from 'expo-router';
 import { StripeProvider } from '@stripe/stripe-react-native';
 import { AuthProvider } from '../context/AuthContext';
 import { PaymentProvider } from '../context/PaymentContext';
@@ -17,3 +33,4 @@ export default function RootLayout() {
     </StripeProvider>
   );
 }
+ */
